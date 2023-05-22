@@ -1,0 +1,32 @@
+*.po~
+*.pot~
+
+# OS generated files #
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Dependency directories
+node_modules/
+/freemius
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch1
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.Trashes

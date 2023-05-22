@@ -1,0 +1,8 @@
+{
+  "name": "cost-calculator-builder-pro",
+  "description": "cost-calculator-builder-pro",
+  "main": "index.js",
+  "devDependencies": {
+    "deploy-freemius": "git+https://github.com/StylemixThemes/deploy-freemius-js.git"
+  }
+}
