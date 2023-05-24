@@ -139,6 +139,7 @@ export default {
 						}
 					}
 				})
+				
 				.catch((err) => {
 					vm.errors.fileUploadUrl = "Wrong file format";
 				});
