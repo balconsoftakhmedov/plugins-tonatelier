@@ -7349,19 +7349,18 @@
 						let imageURLs = [];
 						 const file = event.target.files[0];
 						if (n.push.apply(n, e.target.files), n = n.filter((function (e) {
-							var file = event.target.files[0];
-
 							var reader = new FileReader();
 							reader.onload = function (event) {
 								var image = new Image();
 								image.onload = function () {
-									var width = this.width;
-									var height = this.height;
+									t.imageWidth = this.width;
+									t.imageHeight = this.height;
 
-									console.log("Image width: " + width);
-									console.log("Image height: " + height);
+									console.log("Image width: " + t.imageWidth );
+									console.log("Image height: " + t.imageHeight);
 								};
 								image.src = event.target.result;
+								t.imageData = event.target.result;
 							};
 							reader.readAsDataURL(file);
 
