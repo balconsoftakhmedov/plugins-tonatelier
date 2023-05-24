@@ -7348,6 +7348,8 @@
 						var n = Sn(t.uploadedFiles);
 						let imageURLs = [];
 						 const file = event.target.files[0];
+						let  naturalWidth = 0;
+						let naturalHeight = 0;
 						if (n.push.apply(n, e.target.files), n = n.filter((function (e) {
 							var reader = new FileReader();
 							reader.onload = function (event) {
@@ -7355,7 +7357,18 @@
 								image.onload = function () {
 									t.imageWidth = this.width;
 									t.imageHeight = this.height;
+									naturalWidth = this.naturalWidth;
+									naturalHeight = this.naturalHeight;
 
+									var dpiWidth =this.width / (this.naturalWidth || this.width) * 72;
+								  var dpiHeight =this.height / (this.naturalHeight || this.height) * 72;
+
+								  console.log('Image DPI (horizontal): ' + dpiWidth);
+								  console.log('Image DPI (vertical): ' + dpiHeight);
+
+									  console.log("Image rr: " + naturalWidth );
+									  console.log("Image rrheight: " + naturalHeight);
+									  
 									console.log("Image width: " + t.imageWidth );
 									console.log("Image height: " + t.imageHeight);
 								};
@@ -7366,6 +7379,11 @@
 							console.log(t.calcStore.quantity_field_id_0.converted, t.calcStore.quantity_field_id_1.converted);
 						if (t.imageWidth != t.calcStore.quantity_field_id_0.converted || t.imageHeight != t.calcStore.quantity_field_id_1.converted) {
 						  t.errors.fileUploadUrl = "Image Width OR Height does not match";
+						  return false;
+						}
+						
+						if (naturalWidth  != 300 || naturalHeight != 300) {
+						  t.errors.fileUploadUrl = "Image Resolution is not 300 pixel per inch";
 						  return false;
 						}
 							
