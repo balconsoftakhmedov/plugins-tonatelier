@@ -7386,20 +7386,20 @@
 						console.log({'imageWidth': widthInches, 'imageHeight': heightInches}, dpi)
 						return {'imageWidth': widthInches, 'imageHeight': heightInches};
 					},
-					roundingdpi:function (dpi) {
-  let rounded = ['200', '150', '72', '96'];
+					roundingdpi: function (dpi) {
+						let rounded = ['200', '150', '72', '96'];
 
 
-  for (let i = 0; i < rounded.length; i++) {
-    let roundedValue = parseInt(rounded[i]);
-    if (Math.abs(dpi - roundedValue) <= 3) {
-      return roundedValue;
-    }
-  }
+						for (let i = 0; i < rounded.length; i++) {
+							let roundedValue = parseInt(rounded[i]);
+							if (Math.abs(dpi - roundedValue) <= 3) {
+								return roundedValue;
+							}
+						}
 
 
-  return dpi;
-},
+						return dpi;
+					},
 					addFiles: function (e) {
 						var t = this;
 						t.errors.fileUploadUrl = !1;
@@ -7435,20 +7435,20 @@
 									let dpix = result.dpiX;
 									let dpiy = result.dpiY;
 									let dpi = 300;
-								jQuery(".payment-methods button.calc-btn-action.success").removeClass('disable-button');
-									if (typeof result.dpiX === 'undefined' &&  typeof t.imageWidth !=  'undefined' ) {
-										 			t.errors.fileUploadUrl = "We couldn’t verify the resolution of your uploaded file, we are not responsible for low quality output, would you still like to proceed?";	
-										}else if (typeof result.dpiX == 'undefined' &&  typeof t.imageWidth ==  'undefined' )  {
-												t.errors.fileUploadUrl = "We couldn’t verify the sizing and the resolution of your uploaded file";	
-										} else{
-											if (result.dpiX <= 290 || result.dpiX >= 310 || result.dpiY <= 290 || result.dpiY >= 310) {
-										t.errors.fileUploadUrl = "Low resolution, we are not responsible for low quality output, would you still like to proceed?";	
-										
-										 dpi = t.roundingdpi(dpix);
-										 
-									}
+									jQuery(".payment-methods button.calc-btn-action.success").removeClass('disable-button');
+									if (typeof result.dpiX === 'undefined' && typeof t.imageWidth != 'undefined') {
+										t.errors.fileUploadUrl = "We couldn’t verify the resolution of your uploaded file, we are not responsible for low quality output, would you still like to proceed?";
+									} else if (typeof result.dpiX == 'undefined' && typeof t.imageWidth == 'undefined') {
+										t.errors.fileUploadUrl = "We couldn’t verify the sizing and the resolution of your uploaded file";
+									} else {
+										if (result.dpiX <= 290 || result.dpiX >= 310 || result.dpiY <= 290 || result.dpiY >= 310) {
+											t.errors.fileUploadUrl = "Low resolution, we are not responsible for low quality output, would you still like to proceed?";
+
+											dpi = t.roundingdpi(dpix);
+
 										}
-									
+									}
+
 
 									let imageDimensions = t.calculateDimensionsInInches(t.imageWidth, t.imageHeight, dpi);
 									console.log('imageDimensions', imageDimensions, t.calcStore.quantity_field_id_0.converted, t.calcStore.quantity_field_id_1.converted)
