@@ -7342,7 +7342,6 @@
 					}
 				}, methods: {
 
-
 					get_dpi: function (imagePath) {
 						return new Promise((resolve, reject) => {
 							const unitConversionFactor = 0.0254;
