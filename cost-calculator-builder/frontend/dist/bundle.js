@@ -7320,7 +7320,7 @@
 			pt(!0);
 			var Dn = {
 				mixins: [M.Z], props: {id: {default: null}, value: {default: 0, type: [Number, String]}, field: [Object, String]}, data: function () {
-					return {errors: {fileUploadUrl: !1}, fileUpload: null, fileUploadPrice: 0, fileUploadUrl: "", openFileList: !1, showInfo: !1, uploadedFiles: [], uploadFromUrl: !1, imageData: '', imageWidth:0,  imageHeight: 0}
+					return {errors: {fileUploadUrl: !1}, fileUpload: null, fileUploadPrice: 0, fileUploadUrl: "", openFileList: !1, showInfo: !1, uploadedFiles: [], uploadFromUrl: !1, imageData: '', imageWidth: 0, imageHeight: 0}
 				}, created: function () {
 					this.fileUpload = this.parseComponentData(), this.fileUpload.alias && (this.fileUploadPrice = isNaN(parseFloat(this.fileUpload.price)) ? 0 : parseFloat(this.fileUpload.price))
 				}, mounted: function () {
@@ -7341,14 +7341,64 @@
 						return this.$store.getters.getTranslations
 					}
 				}, methods: {
+
+
+					get_dpi: function (imagePath) {
+						return new Promise((resolve, reject) => {
+							const unitConversionFactor = 0.0254;
+							fetch(imagePath)
+								.then(response => response.blob())
+								.then(blob => {
+									const fileReader = new FileReader();
+									fileReader.onload = function () {
+										const fileData = fileReader.result;
+
+										if (fileData !== false && fileData.includes('pHYs')) {
+											const pHYsChunkPos = fileData.indexOf('pHYs') + 4;
+											const chunkData = fileData.substring(pHYsChunkPos, pHYsChunkPos + 8);
+
+											const byteArray = new Uint8Array(chunkData.length);
+											for (let i = 0; i < chunkData.length; i++) {
+												byteArray[i] = chunkData.charCodeAt(i) & 0xff;
+											}
+
+											const dataView = new DataView(byteArray.buffer);
+											const pixelsPerUnitX = dataView.getUint32(0, false);
+											const pixelsPerUnitY = dataView.getUint32(4, false);
+
+											const dpiX = pixelsPerUnitX * unitConversionFactor;
+											const dpiY = pixelsPerUnitY * unitConversionFactor;
+
+											resolve({dpiX, dpiY});
+										} else {
+											reject("The PNG file does not contain a pHYs chunk.");
+										}
+									};
+									fileReader.readAsText(blob);
+								})
+								.catch(error => {
+									reject('Error retrieving file: ' + error);
+								});
+						});
+					},
+
+					calculateDimensionsInInches: function (widthPixels, heightPixels, dpi) {
+						const inchesPerMeter = 39.37; // Conversion factor from meters to inches
+
+						// Calculate the physical width and height in inches
+						const widthInches = widthPixels / dpi;
+						const heightInches = heightPixels / dpi;
+						console.log({'imageWidth': widthInches, 'imageHeight': heightInches}, dpi)
+						return {'imageWidth': widthInches, 'imageHeight': heightInches};
+					},
 					addFiles: function (e) {
 						var t = this;
-						
+
 						t.errors.fileUploadUrl = !1;
 						var n = Sn(t.uploadedFiles);
 						let imageURLs = [];
-						 const file = event.target.files[0];
-						let  naturalWidth = 0;
+						const file = event.target.files[0];
+						let naturalWidth = 0;
 						let naturalHeight = 0;
 						if (n.push.apply(n, e.target.files), n = n.filter((function (e) {
 							var reader = new FileReader();
@@ -7359,34 +7409,42 @@
 									t.imageHeight = this.height;
 									naturalWidth = this.naturalWidth;
 									naturalHeight = this.naturalHeight;
-
-									var dpiWidth =this.width / (this.naturalWidth || this.width) * 72;
-								  var dpiHeight =this.height / (this.naturalHeight || this.height) * 72;
-
-								  console.log('Image DPI (horizontal): ' + dpiWidth);
-								  console.log('Image DPI (vertical): ' + dpiHeight);
-
-									  console.log("Image rr: " + naturalWidth );
-									  console.log("Image rrheight: " + naturalHeight);
-									  
-									console.log("Image width: " + t.imageWidth );
-									console.log("Image height: " + t.imageHeight);
 								};
 								image.src = event.target.result;
 								t.imageData = event.target.result;
 							};
 							reader.readAsDataURL(file);
 							console.log(t.calcStore.quantity_field_id_0.converted, t.calcStore.quantity_field_id_1.converted);
-						if (t.imageWidth != t.calcStore.quantity_field_id_0.converted || t.imageHeight != t.calcStore.quantity_field_id_1.converted) {
-						  t.errors.fileUploadUrl = "Image Width OR Height does not matchdddd";
-						  return false;
-						}
-						
-						if (naturalWidth  != 300 || naturalHeight != 300) {
-						  t.errors.fileUploadUrl = "Image Resolution is not 300 pixel per inch";
-						  return false;
-						}
-							
+
+
+							const imagePath = URL.createObjectURL(file);
+
+							t.get_dpi(imagePath)
+								.then(result => {
+									console.log("DPI (X): " + result.dpiX);
+									console.log("DPI (Y): " + result.dpiY);
+									console.log("Image width: " + t.imageWidth);
+									console.log("Image height: " + t.imageHeight);
+									let dpix = result.dpiX;
+									let dpiy = result.dpiY;
+									let dpi = 300;
+									if (result.dpiX <= 290 || result.dpiX >= 310 || result.dpiY <= 290 || result.dpiY >= 310) {
+										t.errors.fileUploadUrl = "Image Resolution is not 300 pixel per inch";
+										return false;
+									}
+
+									let imageDimensions = t.calculateDimensionsInInches(t.imageWidth, t.imageHeight, dpi);
+									console.log('imageDimensions', imageDimensions, t.calcStore.quantity_field_id_0.converted, t.calcStore.quantity_field_id_1.converted)
+									if (imageDimensions.imageWidth != t.calcStore.quantity_field_id_0.converted || imageDimensions.imageHeight != t.calcStore.quantity_field_id_1.converted) {
+										t.errors.fileUploadUrl = "Image Width OR Height does not match";
+										return false;
+									}
+								})
+								.catch(error => {
+									console.log(error);
+								});
+
+
 							return t.validateFile(e)
 						})), t.fileUpload.max_attached_files < parseInt(n.length)) {
 							var o = parseInt(n.length) - parseInt(t.fileUpload.max_attached_files);
@@ -7450,7 +7508,7 @@
 						})()
 					}, validateFile: function (e) {
 						var t = (e.size / 1048576).toFixed(2);
-						return +this.fileUpload.max_file_size < t ? (this.errors.fileUploadUrl = this.translations.big_file_size, !1) : !!this.allowedFormats.includes(e.name.split(".").pop().toLowerCase()) || (this.errors.fileUploadUrl = this.translations.wrong_file_format, !1) 
+						return +this.fileUpload.max_file_size < t ? (this.errors.fileUploadUrl = this.translations.big_file_size, !1) : !!this.allowedFormats.includes(e.name.split(".").pop().toLowerCase()) || (this.errors.fileUploadUrl = this.translations.wrong_file_format, !1)
 					}, uploadFromUrlBtn: function () {
 						this.fileUpload.max_attached_files <= parseInt(this.uploadedFiles.length) || (this.uploadFromUrl = !this.uploadFromUrl, this.fileUploadUrl = "", this.errors.fileUploadUrl = !1)
 					}
