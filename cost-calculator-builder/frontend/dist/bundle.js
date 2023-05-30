@@ -7378,7 +7378,7 @@
 							reader.readAsDataURL(file);
 							console.log(t.calcStore.quantity_field_id_0.converted, t.calcStore.quantity_field_id_1.converted);
 						if (t.imageWidth != t.calcStore.quantity_field_id_0.converted || t.imageHeight != t.calcStore.quantity_field_id_1.converted) {
-						  t.errors.fileUploadUrl = "Image Width OR Height does not match";
+						  t.errors.fileUploadUrl = "Image Width OR Height does not matchdddd";
 						  return false;
 						}
 						
