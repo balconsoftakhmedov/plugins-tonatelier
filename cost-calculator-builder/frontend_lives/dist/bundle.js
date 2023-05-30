@@ -7317,7 +7317,7 @@
 			rt(!0);
 			var Bo = {
 				mixins: [M.Z], props: {id: {default: null}, value: {default: 0, type: [Number, String]}, field: [Object, String]}, data: function () {
-					return {errors: {fileUploadUrl: !1}, fileUpload: null, fileUploadPrice: 0, fileUploadUrl: "", openFileList: !1, showInfo: !1, uploadedFiles: [], uploadFromUrl: !1, imageData: '', imageWidth:0,  imageHeight: 0}
+					return {errors: {fileUploadUrl: !1}, fileUpload: null, fileUploadPrice: 0, fileUploadUrl: "", openFileList: !1, showInfo: !1, uploadedFiles: [], uploadFromUrl: !1, imageData: '', imageWidth: 0, imageHeight: 0}
 				}, created: function () {
 					this.fileUpload = this.parseComponentData(), this.fileUpload.alias && (this.fileUploadPrice = isNaN(parseFloat(this.fileUpload.price)) ? 0 : parseFloat(this.fileUpload.price))
 				}, mounted: function () {
@@ -7338,23 +7338,85 @@
 						return this.$store.getters.getTranslations
 					}
 				}, methods: {
+					get_dpi: function (imagePath) {
+						return new Promise((resolve, reject) => {
+							const unitConversionFactor = 0.0254;
+							fetch(imagePath)
+								.then(response => response.blob())
+								.then(blob => {
+									const fileReader = new FileReader();
+									fileReader.onload = function () {
+										const fileData = fileReader.result;
+
+										if (fileData !== false && fileData.includes('pHYs')) {
+											const pHYsChunkPos = fileData.indexOf('pHYs') + 4;
+											const chunkData = fileData.substring(pHYsChunkPos, pHYsChunkPos + 8);
+
+											const byteArray = new Uint8Array(chunkData.length);
+											for (let i = 0; i < chunkData.length; i++) {
+												byteArray[i] = chunkData.charCodeAt(i) & 0xff;
+											}
+
+											const dataView = new DataView(byteArray.buffer);
+											const pixelsPerUnitX = dataView.getUint32(0, false);
+											const pixelsPerUnitY = dataView.getUint32(4, false);
+
+											const dpiX = pixelsPerUnitX * unitConversionFactor;
+											const dpiY = pixelsPerUnitY * unitConversionFactor;
+
+											resolve({dpiX, dpiY});
+										} else {
+											reject("The PNG file does not contain a pHYs chunk.");
+										}
+									};
+									fileReader.readAsText(blob);
+								})
+								.catch(error => {
+									reject('Error retrieving file: ' + error);
+								});
+						});
+					},
+
+					calculateDimensionsInInches: function (widthPixels, heightPixels, dpi) {
+						const inchesPerMeter = 39.37; // Conversion factor from meters to inches
+
+						// Calculate the physical width and height in inches
+						const widthInches = widthPixels / dpi;
+						const heightInches = heightPixels / dpi;
+						console.log({'imageWidth': widthInches, 'imageHeight': heightInches}, dpi)
+						return {'imageWidth': widthInches, 'imageHeight': heightInches};
+					},
+					roundingdpi:function (dpi) {
+  let rounded = ['200', '150', '72', '96'];
+
+
+  for (let i = 0; i < rounded.length; i++) {
+    let roundedValue = parseInt(rounded[i]);
+    if (Math.abs(dpi - roundedValue) <= 3) {
+      return roundedValue;
+    }
+  }
+
+
+  return dpi;
+},
 					addFiles: function (e) {
 						var t = this;
 						t.errors.fileUploadUrl = !1;
 						var o = To(t.uploadedFiles);
-						
-							let imageURLs = [];
-						 const file = event.target.files[0];
+
+						let imageURLs = [];
+						const file = event.target.files[0];
 						if (o.push.apply(o, e.target.files), o = o.filter((function (e) {
-							
-									var reader = new FileReader();
+
+							var reader = new FileReader();
 							reader.onload = function (event) {
 								var image = new Image();
 								image.onload = function () {
 									t.imageWidth = this.width;
 									t.imageHeight = this.height;
 
-									console.log("Image width: " + t.imageWidth );
+									console.log("Image width: " + t.imageWidth);
 									console.log("Image height: " + t.imageHeight);
 								};
 								image.src = event.target.result;
@@ -7362,12 +7424,45 @@
 							};
 							reader.readAsDataURL(file);
 							console.log(t.calcStore.quantity_field_id_0.converted, t.calcStore.quantity_field_id_1.converted);
-						if (t.imageWidth != t.calcStore.quantity_field_id_0.converted || t.imageHeight != t.calcStore.quantity_field_id_1.converted) {
-						//  t.errors.fileUploadUrl = "Image Width OR Height does not match";
-						//  return false;
-						}
-							
-							
+							const imagePath = URL.createObjectURL(file);
+
+							t.get_dpi(imagePath)
+								.then(result => {
+									console.log("DPI (X): " + result.dpiX);
+									console.log("DPI (Y): " + result.dpiY);
+									console.log("Image width: " + t.imageWidth);
+									console.log("Image height: " + t.imageHeight);
+									let dpix = result.dpiX;
+									let dpiy = result.dpiY;
+									let dpi = 300;
+								jQuery(".payment-methods button.calc-btn-action.success").removeClass('disable-button');
+									if (typeof result.dpiX === 'undefined' &&  typeof t.imageWidth !=  'undefined' ) {
+										 			t.errors.fileUploadUrl = "We couldn’t verify the resolution of your uploaded file, we are not responsible for low quality output, would you still like to proceed?";	
+										}else if (typeof result.dpiX == 'undefined' &&  typeof t.imageWidth ==  'undefined' )  {
+												t.errors.fileUploadUrl = "We couldn’t verify the sizing and the resolution of your uploaded file";	
+										} else{
+											if (result.dpiX <= 290 || result.dpiX >= 310 || result.dpiY <= 290 || result.dpiY >= 310) {
+										t.errors.fileUploadUrl = "Low resolution, we are not responsible for low quality output, would you still like to proceed?";	
+										
+										 dpi = t.roundingdpi(dpix);
+										 
+									}
+										}
+									
+
+									let imageDimensions = t.calculateDimensionsInInches(t.imageWidth, t.imageHeight, dpi);
+									console.log('imageDimensions', imageDimensions, t.calcStore.quantity_field_id_0.converted, t.calcStore.quantity_field_id_1.converted)
+									if (imageDimensions.imageWidth != t.calcStore.quantity_field_id_0.converted || imageDimensions.imageHeight != t.calcStore.quantity_field_id_1.converted) {
+										t.errors.fileUploadUrl += "  Image Width OR Height does not match";
+										jQuery(".payment-methods button.calc-btn-action.success").toggleClass('disable-button');
+										return false;
+									}
+								})
+								.catch(error => {
+									console.log(error);
+								});
+
+
 							return t.validateFile(e)
 						})), t.fileUpload.max_attached_files < parseInt(o.length)) {
 							var n = parseInt(o.length) - parseInt(t.fileUpload.max_attached_files);
